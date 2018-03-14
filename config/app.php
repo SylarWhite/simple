@@ -78,7 +78,9 @@ return [
     |
     */
 
-    'locale' => 'en',
+    //composer require "overtrue/laravel-lang:~3.0"
+    'locale' => 'zh-CN',
+//    'locale' => 'en',
 
     /*
     |--------------------------------------------------------------------------

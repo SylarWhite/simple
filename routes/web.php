@@ -21,3 +21,5 @@ Route::get('/about', 'StaticPagesController@about')->name('about');
 
 # user
 Route::get('singup', 'UserController@create')->name('singup');
+
+Route::resource('users', 'UserController');

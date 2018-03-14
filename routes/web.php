@@ -20,7 +20,7 @@ Route::get('/faq', 'StaticPagesController@help')->name('help');
 Route::get('/about', 'StaticPagesController@about')->name('about');
 
 # 打开注册页面
-Route::get('singup', 'UserController@create')->name('signup');
+Route::get('signup', 'UserController@create')->name('signup');
 
 // 用户增删改查
 Route::resource('users', 'UserController');

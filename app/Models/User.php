@@ -20,7 +20,21 @@ class User extends Authenticatable
         'password',
     ];
 
+    /**
+     * 一对多关联，一个用户对应多个微博
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function statuses()
+    {
+        return $this->hasMany(Status::class);
+    }
 
+
+    /**
+     * 头像
+     * @param string $size
+     * @return string
+     */
     public function gravatar($size = '100')
     {
         $hash = md5(strtolower(trim($this->attributes['email'])));
@@ -40,5 +54,10 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new RestPassword($token));
+    }
+
+    public function feed()
+    {
+        return $this->statuses()->orderBy('created_at','desc');
     }
 }

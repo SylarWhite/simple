@@ -16,7 +16,8 @@ class AuthServiceProvider extends ServiceProvider
         'App\Model' => 'App\Policies\ModelPolicy',
 
         // 授权模型和授权策略绑定
-        \App\Models\User::class => \App\Policies\UserPolicy::class
+        \App\Models\User::class => \App\Policies\UserPolicy::class,
+        \App\Models\Status::class => \App\Policies\StatusPolicy::class
     );
 
     /**

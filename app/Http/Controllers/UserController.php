@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -17,7 +18,7 @@ class UserController extends Controller
          * 意思是这下面的几个方法都是免检的，除此之外，都需要做用户登陆验证
          */
         $this->middleware('auth', [
-            'except'=>['show','create','store','index']
+            'except'=>['show','create','store','index','confirmEmail']
         ]);
 
         /**
@@ -28,6 +29,10 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * 首页，暂时为展示用户，简单分页
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function index()
     {
         $users = User::paginate(8);
@@ -74,10 +79,16 @@ class UserController extends Controller
         ]);
 
         //注册后自动登陆
-        Auth::login($user);
+//        Auth::login($user);
+//        session()->flash('success','欢迎，您将在这里开启一段新的旅程~');
+//        return redirect()->route('users.show', [$user]);
 
-        session()->flash('success','欢迎，您将在这里开启一段新的旅程~');
-        return redirect()->route('users.show', [$user]);
+        //注册后发送邮箱验证
+        $this->sendEmailConfirmationTo($user);
+        session()->flash('success', '验证邮件已发送到你的注册邮箱上，请注意查收。');
+        return redirect('/');
+
+
     }
 
     /**
@@ -116,7 +127,13 @@ class UserController extends Controller
         return redirect()->route('users.show', $user->id);
     }
 
-
+    /**
+     * 删除用户
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
+     * @throws \Exception
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function destroy(User $user)
     {
         // 删除授权策略，必须满足destroy的策略才能继续执行
@@ -125,5 +142,36 @@ class UserController extends Controller
         $user->delete();
         session()->flash('success', '成功删除用户！');
         return back();
+    }
+
+    /**
+     * 验证token之后跳转到用户页面
+     * @param $token
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function confirmEmail($token)
+    {
+        $user = User::where('activation_token', $token)->firstOrFail();
+
+        $user->activated = true;
+        $user->activation_token = null;
+        $user->save();
+
+        Auth::login($user);
+        session()->flash('success', '恭喜你，激活成功！');
+        return redirect()->route('users.show', [$user]);
+    }
+
+    protected function sendEmailConfirmationTo(User $user){
+        $view = 'emails.confirm';
+        $data = compact('user');
+        $from = 'sylar.bigb@gmail.com';
+        $name = 'Sylar.Bigb';
+        $to = $user->email;
+        $subject = "感谢注册 Sample 应用！请确认你的邮箱。";
+
+        Mail::send($view, $data, function ($message) use ($from, $name, $to, $subject) {
+            $message->from($from, $name)->to($to)->subject($subject);
+        });
     }
 }

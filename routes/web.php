@@ -33,3 +33,6 @@ Route::post('login', 'SessionController@store')->name('login');
 
 // 销毁会话（退出登录）
 Route::delete('logout', 'SessionController@destroy')->name('logout');
+
+// 邮箱注册验证
+Route::get('signup/confirm/{token}', 'UserController@confirmEmail')->name('confirm_email');

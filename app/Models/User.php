@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\RestPassword;
+use Illuminate\Support\Facades\Auth;
 
 
 class User extends Authenticatable
@@ -29,6 +30,57 @@ class User extends Authenticatable
         return $this->hasMany(Status::class);
     }
 
+    /**
+     * 多对多关联，获取粉丝列表
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'user_id', 'follower_id');
+    }
+
+    /**
+     * 多对多关联，用户关注的对象
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followings()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'follower_id', 'user_id');
+    }
+
+
+    /**
+     * 关注别人
+     * @param $user_ids
+     */
+    public function follow($user_ids){
+        if (!is_array($user_ids)) {
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->sync($user_ids, false);
+    }
+
+    /**
+     * 取消关注
+     * @param $user_ids
+     */
+    public function unfollow($user_ids)
+    {
+        if (!is_array($user_ids)) {
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->detach($user_ids);
+    }
+
+    /**
+     * 判断是否已关注
+     * @param $user_id
+     * @return mixed
+     */
+    public function isFollowing($user_id)
+    {
+        return $this->followings->contains($user_id);
+    }
 
     /**
      * 头像
@@ -56,8 +108,16 @@ class User extends Authenticatable
         $this->notify(new RestPassword($token));
     }
 
+    /**
+     * @return $this
+     */
     public function feed()
     {
-        return $this->statuses()->orderBy('created_at','desc');
+        $user_ids = Auth::user()->followings()->pluck('id')->toArray();
+        array_push($user_ids,Auth::user()->id);
+
+        return Status::whereIn('user_id',$user_ids)
+            ->with('user')
+            ->orderBy('created_at','desc');
     }
 }
